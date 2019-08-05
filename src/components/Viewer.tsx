@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import * as PIXI from 'pixi.js';
+import { ImageViewer } from './ImageViewer';
 
 interface Props {}
 interface State {
@@ -8,69 +8,40 @@ interface State {
   imgUrl: string;
 }
 export class Viewer extends React.Component<Props, State> {
-  private app: PIXI.Application;
-  private appText: PIXI.Text;
+  private _viewer: ImageViewer;
 
   constructor(props: Props) {
     super(props);
     this.state = {
-      text: 'first text',
+      text: '',
       imgUrl: '#',
     };
-    this.app = new PIXI.Application({
-      width: 400,
-      height: 300,
-      backgroundColor: 0x1099bb,
-      resolution: window.devicePixelRatio || 1,
-      preserveDrawingBuffer: true,
-    });
-    this.appText = new PIXI.Text(this.state.text);
-
     this.changeText = this.changeText.bind(this);
+    this.changeRadio = this.changeRadio.bind(this);
     this.getImage = this.getImage.bind(this);
-
-    // @ts-ignore
-    // window.WebFontConfig = {
-    //   google: {
-    //     families: ['Snippet', 'Arvo:700italic', 'Podkova:700'],
-    //   },
-    //
-    //   active() {
-    //     init();
-    //   },
-    // };
+    this._viewer = new ImageViewer();
   }
 
   componentDidMount(): void {
-    //@ts-ignore
-    document.getElementById('app').appendChild(this.app.view);
-
-    const container = new PIXI.Container();
-    this.app.stage.addChild(container);
-    container.x = this.app.screen.width / 2;
-    container.y = this.app.screen.height / 2;
-    container.pivot.x = container.width / 2;
-    container.pivot.y = container.height / 2;
-    const texture = PIXI.Texture.from('/assets/images/cat1_smile.png');
-    this.appText = new PIXI.Text(this.state.text);
-    const cat = new PIXI.Sprite(texture);
-    cat.anchor.set(0.5);
-    cat.scale.set(0.5);
-    this.appText.anchor.set(0.5);
-    // text.text = 'bbbbbbbbb';
-    container.addChild(cat);
-    container.addChild(this.appText);
+    this._viewer.mount('app');
+    this._viewer.setImage('/assets/images/cat1_smile.png');
   }
 
   getImage() {
-    const imgUrl = this.app.view.toDataURL('image/png');
-    console.log(imgUrl);
+    const imgUrl = this._viewer.getImageUrl();
     this.setState({ imgUrl });
   }
 
   changeText(event: React.ChangeEvent<HTMLTextAreaElement>) {
     this.setState({ text: event.target.value });
-    this.appText.text = event.target.value;
+    this._viewer.setText(event.target.value);
+  }
+
+  changeRadio(event: React.MouseEvent<HTMLInputElement>) {
+    //@ts-ignore
+    this.setState({ text: event.target.value });
+    //@ts-ignore
+    this._viewer.setImage(event.target.value);
   }
 
   render() {
@@ -78,8 +49,37 @@ export class Viewer extends React.Component<Props, State> {
       <Container>
         <div id="app" />
         <InputContainer>
+          <Title>テキスト</Title>
           <InputText defaultValue={this.state.text} onChange={this.changeText} />
-          <Button href="#" onClick={this.getImage} download="test.png">
+
+          <ThumbnailList>
+            <ThumbnailListItem>
+              <label>
+                <input type="radio" name="image" value="/assets/images/cat1_smile.png" onClick={this.changeRadio} />
+                <Thumbnail src={'/assets/images/cat1_smile.png'} />
+              </label>
+            </ThumbnailListItem>
+            <ThumbnailListItem>
+              <label>
+                <input type="radio" name="image" value="/assets/images/cat2_angry.png" onClick={this.changeRadio} />
+                <Thumbnail src={'/assets/images/cat2_angry.png'} />
+              </label>
+            </ThumbnailListItem>
+            <ThumbnailListItem>
+              <label>
+                <input type="radio" name="image" value="/assets/images/cat3_cry.png" onClick={this.changeRadio} />
+                <Thumbnail src={'/assets/images/cat3_cry.png'} />
+              </label>
+            </ThumbnailListItem>
+            <ThumbnailListItem>
+              <label>
+                <input type="radio" name="image" value="/assets/images/cat4_laugh.png" onClick={this.changeRadio} />
+                <Thumbnail src={'/assets/images/cat4_laugh.png'} />
+              </label>
+            </ThumbnailListItem>
+          </ThumbnailList>
+
+          <Button href={this.state.imgUrl} onClick={this.getImage} download="test.png">
             ダウンロード
           </Button>
         </InputContainer>
@@ -89,18 +89,22 @@ export class Viewer extends React.Component<Props, State> {
 }
 
 const Container = styled.div`
-  display: flex;
+  //display: flex;
+  //flex-direction: column;
   //justify-content: space-between;
 `;
 
 const InputText = styled.textarea`
   border: solid 1px #666;
-  width: 300px;
+  width: 100%;
   padding: 10px;
+  box-sizing: border-box;
 `;
 
 const InputContainer = styled.div`
-  padding: 10px;
+  //padding: 10px;
+  width: 600px;
+  margin: 0 auto;
 `;
 
 const Button = styled.a`
@@ -113,4 +117,32 @@ const Button = styled.a`
   color: #fff;
   font-size: 16px;
   font-weight: bold;
+  text-decoration: none;
+`;
+
+const Title = styled.p`
+  text-align: left;
+  margin: 0 0 10px 0;
+  font-weight: bold;
+`;
+
+const ThumbnailList = styled.ul`
+  padding: 0;
+  display: flex;
+  justify-content: space-around;
+`;
+const ThumbnailListItem = styled.li`
+  list-style: none;
+  margin-left: 20px;
+  &:first-child {
+    margin-left: 0;
+  }
+  > label {
+    display: flex;
+    align-items: center;
+  }
+`;
+
+const Thumbnail = styled.img`
+  width: 100px;
 `;
